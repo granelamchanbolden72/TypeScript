@@ -944,7 +944,7 @@ namespace ts.projectSystem {
             checkProjectActualFiles(service.inferredProjects[0], [f.path, commander.path]);
         });
 
-        it("should install typings for unresolved imports", () => {
+        it("should install typings for unresolved imports foooo", () => { //name
             const file: TestFSWithWatch.File = {
                 path: "/a/b/app.js",
                 content: `

@@ -80,7 +80,7 @@ namespace ts {
     export function createResolutionCache(resolutionHost: ResolutionCacheHost, rootDirForResolution: string | undefined, logChangesWhenResolvingModule: boolean): ResolutionCache {
         let filesWithChangedSetOfUnresolvedImports: Path[] | undefined;
         let filesWithInvalidatedResolutions: Map<true> | undefined;
-        let filesWithInvalidatedNonRelativeUnresolvedImports: Map<ReadonlyArray<string>> | undefined;
+        let filesWithInvalidatedNonRelativeUnresolvedImports: ReadonlyMap<ReadonlyArray<string>> | undefined;
         let allFilesHaveInvalidatedResolution = false;
         const nonRelativeExternalModuleResolutions = createMultiMap<ResolutionWithFailedLookupLocations>();
 
@@ -220,36 +220,30 @@ namespace ts {
         }
 
         function resolveModuleName(moduleName: string, containingFile: string, compilerOptions: CompilerOptions, host: ModuleResolutionHost, redirectedReference?: ResolvedProjectReference): CachedResolvedModuleWithFailedLookupLocations {
-            const primaryResult = ts.resolveModuleName(moduleName, containingFile, compilerOptions, host, moduleResolutionCache, redirectedReference);
-            // return result immediately only if global cache support is not enabled or if it is .ts, .tsx or .d.ts
-            if (!resolutionHost.getGlobalCache) {
-                return primaryResult;
-            }
+            const primaryResult = ts.resolveModuleName(moduleName, containingFile, compilerOptions, host, moduleResolutionCache);
 
-            // otherwise try to load typings from @types
-            const globalCache = resolutionHost.getGlobalCache();
+            const globalCache = resolutionHost.getGlobalCache ? resolutionHost.getGlobalCache() : undefined;
             if (globalCache !== undefined && !isExternalModuleNameRelative(moduleName) && !(primaryResult.resolvedModule && extensionIsTS(primaryResult.resolvedModule.extension))) {
                 // create different collection of failed lookup locations for second pass
                 // if it will fail and we've already found something during the first pass - we don't want to pollute its results
                 const { resolvedModule, failedLookupLocations } = loadModuleFromGlobalCache(moduleName, resolutionHost.projectName, compilerOptions, host, globalCache);
-                if (resolvedModule) {
-                    return { resolvedModule, failedLookupLocations: addRange(primaryResult.failedLookupLocations as string[], failedLookupLocations) };
-                }
+                return { resolvedModule: resolvedModule || primaryResult.resolvedModule, failedLookupLocations: [...primaryResult.failedLookupLocations, ...failedLookupLocations] };
             }
-
-            // Default return the result from the first pass
-            return primaryResult;
+            else {
+                // Default return the result from the first pass
+                return primaryResult;
+            }
         }
 
         function resolveNamesWithLocalCache<T extends ResolutionWithFailedLookupLocations, R extends ResolutionWithResolvedFileName>(
-            names: string[],
+            names: ReadonlyArray<string>,
             containingFile: string,
             redirectedReference: ResolvedProjectReference | undefined,
             cache: Map<Map<T>>,
             perDirectoryCacheWithRedirects: CacheWithRedirects<Map<T>>,
             loader: (name: string, containingFile: string, options: CompilerOptions, host: ModuleResolutionHost, redirectedReference?: ResolvedProjectReference) => T,
             getResolutionWithResolvedFileName: GetResolutionWithResolvedFileName<T, R>,
-            reusedNames: string[] | undefined,
+            reusedNames: ReadonlyArray<string> | undefined,
             logChanges: boolean): (R | undefined)[] {
 
             const path = resolutionHost.toPath(containingFile);
@@ -412,7 +406,7 @@ namespace ts {
             if (isInDirectoryPath(rootPath, failedLookupLocationPath)) {
                 // Ensure failed look up is normalized path
                 failedLookupLocation = isRootedDiskPath(failedLookupLocation) ? normalizePath(failedLookupLocation) : getNormalizedAbsolutePath(failedLookupLocation, getCurrentDirectory());
-                Debug.assert(failedLookupLocation.length === failedLookupLocationPath.length, `FailedLookup: ${failedLookupLocation} failedLookupLocationPath: ${failedLookupLocationPath}`); // tslint:disable-line
+                Debug.assert(failedLookupLocation.length === failedLookupLocationPath.length, `FailedLookup: ${failedLookupLocation} failedLookupLocationPath: ${failedLookupLocationPath}`); //there was a tslint:disable-line for some reason
                 const subDirectoryInRoot = failedLookupLocationPath.indexOf(directorySeparator, rootPath.length + 1);
                 if (subDirectoryInRoot !== -1) {
                     // Instead of watching root, watch directory in root to avoid watching excluded directories not needed for module resolution
@@ -681,7 +675,7 @@ namespace ts {
             );
         }
 
-        function setFilesWithInvalidatedNonRelativeUnresolvedImports(filesMap: Map<ReadonlyArray<string>>) {
+        function setFilesWithInvalidatedNonRelativeUnresolvedImports(filesMap: ReadonlyMap<ReadonlyArray<string>>) {
             Debug.assert(filesWithInvalidatedNonRelativeUnresolvedImports === filesMap || filesWithInvalidatedNonRelativeUnresolvedImports === undefined);
             filesWithInvalidatedNonRelativeUnresolvedImports = filesMap;
         }
