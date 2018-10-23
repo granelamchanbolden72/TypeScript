@@ -644,6 +644,8 @@ declare var cancellation: FourSlashInterface.cancellation;
 declare var classification: typeof FourSlashInterface.classification;
 declare namespace completion {
     export const globals: ReadonlyArray<string>;
+    export const globalsVars: ReadonlyArray<string>;
+    export function globalsInsideFunction(plus: ReadonlyArray<FourSlashInterface.ExpectedCompletionEntry>): ReadonlyArray<FourSlashInterface.ExpectedCompletionEntry>;
     export function globalsPlus(plus: ReadonlyArray<FourSlashInterface.ExpectedCompletionEntry>): ReadonlyArray<FourSlashInterface.ExpectedCompletionEntry>;
     export const keywordsWithUndefined: ReadonlyArray<string>;
     export const keywords: ReadonlyArray<string>;

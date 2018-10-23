@@ -35,28 +35,22 @@
 ////const x = `/*14*/ ${/*15*/}`; // globals only in template expression
 ////var user = </*16*/User name=/*17*/{ /*18*/window.isLoggedIn ? window.name : '/*19*/'} />; // globals only in JSX expression (but not in JSX expression strings)
 
+const x = ["test", "A", "B", "C", "y", "z", "x", "user"];
+const globals: ReadonlyArray<FourSlashInterface.ExpectedCompletionEntry> = [...x, ...completion.globals]
 verify.completions(
     { marker: ["1"], exact: undefined, isGlobalCompletion: false },
     { marker: "2", exact: ["a.ts", "file.ts"], isGlobalCompletion: false, isNewIdentifierLocation: true },
+    { marker: "3", exact: undefined, isGlobalCompletion: false },
+    { marker: "4", exact: [], isGlobalCompletion: false },
+    { marker: "5", exact: globals, isGlobalCompletion: true },
+    { marker: "6", exact: undefined, isGlobalCompletion: false },
+    { marker: "7", exact: completion.globalsInsideFunction(x), isGlobalCompletion: true },
+    { marker: "8", exact: undefined, isGlobalCompletion: false },
+    { marker: "9", exact: ["x", "y"], isGlobalCompletion: false },
+    { marker: "10", exact: completion.classElementKeywords, isGlobalCompletion: false, isNewIdentifierLocation: true },
 );
-//TODO:MORE
 
-goTo.marker("3");
-verify.completionListIsGlobal(false);
-goTo.marker("4");
-verify.completionListIsGlobal(false);
-goTo.marker("5");
-verify.completionListIsGlobal(true);
-goTo.marker("6");
-verify.completionListIsGlobal(false);
-goTo.marker("7");
-verify.completionListIsGlobal(true);
-goTo.marker("8");
-verify.completionListIsGlobal(false);
-goTo.marker("9");
-verify.completionListIsGlobal(false);
-goTo.marker("10");
-verify.completionListIsGlobal(false);
+//TODO:MORE
 goTo.marker("11");
 verify.completionListIsGlobal(true);
 goTo.marker("12");
