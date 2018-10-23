@@ -982,8 +982,12 @@ namespace ts.projectSystem {
             }
             host.checkTimeoutQueueLengthAndRun(2);
 
-            // TODO: GH#27302 Should update the project to not include commanderJS.path when @types/commander is installed. Currently it sticks with the JS file.
-            checkProjectActualFiles(service.inferredProjects[0], [file.path, commanderJS.path, ...typeNames.map(typePath)]);
+            checkProjectActualFiles(service.inferredProjects[0], [
+                file.path,
+                //TODO: GH#27302 Should update the project to not include commanderJS.path when @types/commander is installed. Currently it sticks with the JS file.
+                commanderJS.path,
+                ...typeNames.map(typePath)
+            ]);
         });
 
         it("should pick typing names from non-relative unresolved imports", () => {
